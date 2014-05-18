@@ -116,10 +116,10 @@ public abstract class CxfClient<Port> {
 					return port;
 				} catch (Exception e) {
 					LOGGER.warn(
-							"Failed to instanciate Packager Service [{}] : {}",
+							"Failed to instanciate Service [{}] : {}",
 							config.endpoint + " <-- " + config.servers.get(i - 1),
 							e.getMessage());
-					LOGGER.debug("Failed to instanciate Packager Service",
+					LOGGER.debug("Failed to instanciate Service",
 							e);
 				}
 			}
