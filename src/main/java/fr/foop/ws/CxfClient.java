@@ -1,6 +1,8 @@
 package fr.foop.ws;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,16 +25,21 @@ import org.apache.ws.security.handler.WSHandlerConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class CxfClient<Port> {
+public abstract class CxfClient<Port, ServiceManager> {
 
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(CxfClient.class);
 
 	private final CxfClientBuilder config;
 	private final Port port;
+	private final Class<ServiceManager> smClazz;
+	private final String endpoint;
 
-	protected CxfClient(final CxfClientBuilder config) {
+	protected CxfClient(final CxfClientBuilder config,
+			final Class<ServiceManager> smClazz) {
 		this.config = config;
+		this.smClazz = smClazz;
+		this.endpoint = detectEndpoint();
 		this.port = electPort();
 	}
 
@@ -42,21 +49,56 @@ public abstract class CxfClient<Port> {
 
 	public abstract void checkIfPortUp(final Port port) throws Exception;
 
-	public abstract Port newPort();
+	public abstract Port newPort(final ServiceManager serviceManager);
 
+	private String detectEndpoint() {
+		if (config.endpoint.isPresent()) {
+			return config.endpoint.get();
+		} else {
+			return ClientProxy.getClient(newPort(newDefaultServiceManager()))
+					.getEndpoint().getEndpointInfo().getAddress();
+		}
+	}
+
+	private ServiceManager newNoEndpointServiceManager() {
+		try {
+			return smClazz.getConstructor(URL.class).newInstance((URL) null);
+		} catch (InstantiationException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException(
+					"failed to instanciate new service manager", e);
+		}
+	}
+
+	private ServiceManager newDefaultServiceManager() {
+		try {
+			return smClazz.newInstance();
+		} catch (InstantiationException | IllegalAccessException
+				| IllegalArgumentException | SecurityException e) {
+			throw new RuntimeException(
+					"failed to instanciate new service manager", e);
+		}
+	}
+
+	/**
+	 * Configure the given Web Service Port according the CxfClientBuilder configuration.
+	 * It configures Port endpoint (and replace the server name in the endpoint),
+	 * WSSE if any, times out, loggers if required, ...
+	 * @param port
+	 * @param server
+	 */
 	private void configure(final Port port, final String server) {
 		final Client client = ClientProxy.getClient(port);
 		HTTPConduit http = (HTTPConduit) client.getConduit();
 
 		BindingProvider provider = (BindingProvider) port;
 
-		if (config.endpoint.isPresent()) {
-			final String endpoint = config.endpoint.get().replaceFirst(
-					"\\{\\{server\\}\\}", server);
+		final String endpoint = this.endpoint.replaceFirst(
+				"\\{\\{server\\}\\}", server);
 
-			provider.getRequestContext().put(
-					BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpoint);
-		}
+		provider.getRequestContext().put(
+				BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpoint);
 
 		final Endpoint cxfEndpoint = client.getEndpoint();
 
@@ -101,12 +143,21 @@ public abstract class CxfClient<Port> {
 		http.setClient(httpClientPolicy);
 	}
 
+	/**
+	 * Instanciate a configured web service port the provided server.
+	 * @param server
+	 * @return
+	 */
 	private Port instanciateForServer(final String server) {
-		final Port port = newPort();
+		final Port port = newPort(newNoEndpointServiceManager());
 		configure(port, server);
 		return port;
 	}
 
+	/**
+	 * Try to find a working Web Service Port for the given server list.
+	 * @return
+	 */
 	private Port electPort() {
 		if (config.servers.size() == 0) {
 			return instanciateForServer("");

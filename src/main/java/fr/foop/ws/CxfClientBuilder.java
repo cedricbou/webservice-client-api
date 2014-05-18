@@ -25,6 +25,12 @@ public class CxfClientBuilder {
 
 	public final Optional<Logger> outLogger;
 	
+	public CxfClientBuilder() {
+		this(Optional.<String>absent(), Optional.<String> absent(), Optional.<String> absent(),
+				1000, 3000, Optional.<Logger> absent(), Optional
+						.<Logger> absent(), ImmutableList.<String>of());
+	}
+	
 	public CxfClientBuilder(final String endPoint, final String... servers) {
 		this(Optional.of(endPoint), Optional.<String> absent(), Optional.<String> absent(),
 				1000, 3000, Optional.<Logger> absent(), Optional
@@ -88,7 +94,7 @@ public class CxfClientBuilder {
 				connectionTimeout, receiveTimeout, inLogger, outLogger, ImmutableList.copyOf(servers));
 	}
 
-	public <Port, Client extends CxfClient<Port>> Client build(
+	public <Port, Client extends CxfClient<Port, ?>> Client build(
 			Class<Client> clazz) {
 		try {
 			return clazz.getConstructor(CxfClientBuilder.class).newInstance(
@@ -98,7 +104,7 @@ public class CxfClientBuilder {
 				| NoSuchMethodException | SecurityException e) {
 			throw new IllegalArgumentException(
 					"failed to build CxfClient with class : "
-							+ clazz.toString());
+							+ clazz.toString(), e);
 		}
 	}
 
