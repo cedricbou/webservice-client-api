@@ -24,36 +24,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class CxfClient<Port> {
-	
+
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(CxfClient.class);
-	
+
 	private final CxfClientBuilder config;
 	private final Port port;
-	
+
 	protected CxfClient(final CxfClientBuilder config) {
 		this.config = config;
 		this.port = electPort();
 	}
-	
+
 	protected CxfClientBuilder config() {
 		return config;
 	}
-	
+
 	public abstract void checkIfPortUp(final Port port) throws Exception;
 
 	public abstract Port newPort();
-	
+
 	private void configure(final Port port, final String server) {
 		final Client client = ClientProxy.getClient(port);
 		HTTPConduit http = (HTTPConduit) client.getConduit();
 
-		final String endpoint = config.endpoint.replaceFirst(
-				"\\{\\{server\\}\\}", server);
-
 		BindingProvider provider = (BindingProvider) port;
-		provider.getRequestContext().put(
-				BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpoint);
+
+		if (config.endpoint.isPresent()) {
+			final String endpoint = config.endpoint.get().replaceFirst(
+					"\\{\\{server\\}\\}", server);
+
+			provider.getRequestContext().put(
+					BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpoint);
+		}
 
 		final Endpoint cxfEndpoint = client.getEndpoint();
 
@@ -64,7 +67,8 @@ public abstract class CxfClient<Port> {
 			outProps.put(WSHandlerConstants.USER, config.wsseUser.get());
 			outProps.put(WSHandlerConstants.PASSWORD_TYPE, WSConstants.PW_TEXT);
 			outProps.put(WSHandlerConstants.PW_CALLBACK_REF,
-					new ClientPasswordCallback(config.wsseUser.get(), config.wssePwd.get()));
+					new ClientPasswordCallback(config.wsseUser.get(),
+							config.wssePwd.get()));
 
 			WSS4JOutInterceptor wssOut = new WSS4JOutInterceptor(outProps);
 			cxfEndpoint.getOutInterceptors().add(wssOut);
@@ -96,13 +100,13 @@ public abstract class CxfClient<Port> {
 		httpClientPolicy.setReceiveTimeout(config.receiveTimeout);
 		http.setClient(httpClientPolicy);
 	}
-	
+
 	private Port instanciateForServer(final String server) {
 		final Port port = newPort();
 		configure(port, server);
 		return port;
 	}
-	
+
 	private Port electPort() {
 		if (config.servers.size() == 0) {
 			return instanciateForServer("");
@@ -110,21 +114,20 @@ public abstract class CxfClient<Port> {
 			int i = 0;
 			while (i < config.servers.size()) {
 				final Port port = instanciateForServer(config.servers.get(i++));
-				
+
 				try {
 					checkIfPortUp(port);
 					return port;
 				} catch (Exception e) {
 					LOGGER.warn(
 							"Failed to instanciate Service [{}] : {}",
-							config.endpoint + " <-- " + config.servers.get(i - 1),
-							e.getMessage());
-					LOGGER.debug("Failed to instanciate Service",
-							e);
+							config.endpoint + " <-- "
+									+ config.servers.get(i - 1), e.getMessage());
+					LOGGER.debug("Failed to instanciate Service", e);
 				}
 			}
 		}
-		
+
 		return null;
 	}
 

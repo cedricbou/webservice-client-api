@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableList;
 
 public class CxfClientBuilder {
 
-	public final String endpoint;
+	public final Optional<String> endpoint;
 
 	public final Optional<String> wsseUser;
 
@@ -24,14 +24,14 @@ public class CxfClientBuilder {
 	public final Optional<Logger> inLogger;
 
 	public final Optional<Logger> outLogger;
-
+	
 	public CxfClientBuilder(final String endPoint, final String... servers) {
-		this(endPoint, Optional.<String> absent(), Optional.<String> absent(),
+		this(Optional.of(endPoint), Optional.<String> absent(), Optional.<String> absent(),
 				1000, 3000, Optional.<Logger> absent(), Optional
 						.<Logger> absent(), ImmutableList.copyOf(servers));
 	}
 
-	public CxfClientBuilder(final String endpoint,
+	public CxfClientBuilder(final Optional<String> endpoint,
 			final Optional<String> username, final Optional<String> password,
 			final long connectionTimeout, final long receiveTimeout,
 			final Optional<Logger> inLogger, final Optional<Logger> outLogger,
@@ -47,7 +47,7 @@ public class CxfClientBuilder {
 	}
 
 	public CxfClientBuilder withEndpoint(final String endpoint) {
-		return new CxfClientBuilder(endpoint, wsseUser, wssePwd,
+		return new CxfClientBuilder(Optional.of(endpoint), wsseUser, wssePwd,
 				connectionTimeout, receiveTimeout, inLogger, outLogger, servers);
 	}
 
