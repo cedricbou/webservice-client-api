@@ -6,6 +6,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -181,12 +182,15 @@ public class CxfClientBuilder {
 			final Properties props) {
 		CxfClientBuilder configured = this;
 
+		final boolean rootKeyEndsWithDot = rootKey.endsWith(".");
+		
 		for (final String property : propNames) {
+			final String rootedProperty = Joiner.on(rootKeyEndsWithDot?"":".").join(rootKey, property);
 			configured = Optional
 					.fromNullable(propMetas.get(property).configurator)
 					.or(CxfClientBuilderConfigurator.NOOP_CONFIGURATOR)
 					.configure(configured,
-							Optional.fromNullable((String) props.get(property)));
+							Optional.fromNullable((String) props.get(rootedProperty)));
 		}
 
 		return configured;
