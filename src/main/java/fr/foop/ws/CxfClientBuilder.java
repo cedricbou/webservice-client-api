@@ -72,7 +72,8 @@ public class CxfClientBuilder {
 			.put("servers",
 					new PropertyMeta(
 							"Comma separated list of server to use in the endpoint, they will be tried turn by turn at service initialisation",
-							null)).build();
+							CxfClientBuilderConfigurator.SERVERS_CONFIGURATOR))
+			.build();
 
 	public CxfClientBuilder() {
 		this(Optional.<String> absent(), Optional.<String> absent(), Optional

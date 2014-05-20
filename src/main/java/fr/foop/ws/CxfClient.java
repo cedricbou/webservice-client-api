@@ -27,7 +27,7 @@ public abstract class CxfClient<Port, ServiceManager> {
 		this.port = electPort();
 	}
 
-	protected CxfClientBuilder config() {
+	public CxfClientBuilder config() {
 		return config;
 	}
 
@@ -125,5 +125,5 @@ public abstract class CxfClient<Port, ServiceManager> {
 	public Port service() {
 		return port;
 	}
-
+	
 }
