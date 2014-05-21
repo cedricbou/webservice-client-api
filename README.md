@@ -84,10 +84,16 @@ builder()
 To build the client, use the `build` method : 
 
 ```java
-builder()
+final CRMClient client = CRMClient.builder()
 	.withReceiveTimeout(2000)
 	.withLogger("com.myservice.Trames")
-	.build(CRMClient.class);
+	.build(CRMClient.class); // The port is instanciated at this stage.
+
+final CRMServicePT port = client.service(); // Return the port instanciated above.
+
+// Now you can call the web services.
+port.getAll();
+port.create(new CustomerType(...));
 ```
 
 You need to pass the Client class. This is used to automatically cast to the right type in the return.
