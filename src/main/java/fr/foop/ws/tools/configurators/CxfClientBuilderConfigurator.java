@@ -104,6 +104,29 @@ public interface CxfClientBuilderConfigurator {
 		}
 	};
 
+
+	public final static CxfClientBuilderConfigurator MOCKED_PORT_CONFIGURATOR = new BasicBuilderConfigurator() {
+		@Override
+		protected CxfClientBuilder ensurePresentConfigured(
+				CxfClientBuilder configured, String propValue) {
+			return configured.withMockedPort(propValue);
+		}
+	};
+
+	public final static CxfClientBuilderConfigurator USE_MOCK_CONFIGURATOR = new BasicBuilderConfigurator() {
+		@Override
+		protected CxfClientBuilder ensurePresentConfigured(
+				CxfClientBuilder configured, String propValue) {
+			final boolean useMock = Boolean.valueOf(propValue);
+			if(useMock) {
+				return configured.enableMocking();
+			}
+			else {
+				return configured.disableMocking();
+			}
+		}
+	};
+	
 	public final static CxfClientBuilderConfigurator SERVERS_CONFIGURATOR = new BasicBuilderConfigurator() {
 		@Override
 		protected CxfClientBuilder ensurePresentConfigured(

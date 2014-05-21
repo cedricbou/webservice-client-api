@@ -24,9 +24,19 @@ public abstract class CxfClient<Port, ServiceManager> {
 		this.config = config;
 		this.smClazz = smClazz;
 		this.endpoint = detectEndpoint();
-		this.port = electPort();
+		this.port = enableMockIfRequired();
 	}
 
+	@SuppressWarnings("unchecked")
+	private Port enableMockIfRequired() {
+		if(config.useMock && config.mockedPort.isPresent()) {
+			return (Port)config.mockedPort.get();
+		}
+		else {
+			return electPort();
+		}
+	}
+	
 	public CxfClientBuilder config() {
 		return config;
 	}
