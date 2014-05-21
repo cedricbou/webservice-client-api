@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>fr.foop.ws</groupId>
-	<artifactId>werbservice-client-api</artifactId>
+	<artifactId>webservice-client-api</artifactId>
 	<version>0.6.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
